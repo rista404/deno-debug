@@ -83,8 +83,6 @@ export const colors = [
 
 /**
  * Selects a color for a debug namespace
- * @param {String} namespace The namespace string for the for the debug instance to be colored
- * @return {Number|String} An ANSI color code for the given namespace
  */
 export function selectColor(namespace: string): number {
   let hash = 0;
@@ -137,10 +135,6 @@ export function getInspectOpts(): InspectOpts {
 
 /**
  * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
  */
 export function coerce(val: any): any {
   if (val instanceof Error) {
@@ -151,10 +145,6 @@ export function coerce(val: any): any {
 
 /**
  * Convert regexp to namespace
- *
- * @param {RegExp} regxep
- * @return {String} namespace
- * @api private
  */
 export function regexpToNamespace(regexp: RegExp): string {
   return regexp

@@ -20,7 +20,7 @@ server("this is a number: %d", 5);
 server("this is a string: %s, and some json here: %j", "server", { bla: true });
 server("this is a string: %s, and some json here: %j", "server", { bla: true });
 server("what is this, %o ,an object?", { bla: true });
-server("object again %0", {
+server("object again %O", {
   bla: true,
   justify: "column",
   align: { center: true }
@@ -36,6 +36,10 @@ const workerTcp = worker.extend("tcp", "-");
 workerTcp("Hello from extended worker with custom delimiter");
 
 worker("foo bar");
+
+workerTcp(`multi
+line
+comment`);
 
 setTimeout(() => {
   worker("wooooorking");

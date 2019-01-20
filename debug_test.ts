@@ -1,4 +1,4 @@
-import { test, assert, equal } from "https://deno.land/x/testing/mod.ts";
+import { test, assert } from "https://deno.land/x/testing/mod.ts";
 import debug from "./debug.ts";
 
 test({
@@ -29,23 +29,24 @@ test({
     const log = debug("test");
     log.enabled = true;
     const messages = [];
-    log.log = (str: string) => messages.push(str);
+    log.log = (...args: any[]) => messages.push(args);
 
     log(new Error());
 
-    assert.equal(typeof messages[0], "string");
+    assert.equal(typeof messages[0][0], "string");
+    assert.equal(typeof messages[0][1], "string");
   }
 });
 
 test({
   name: "honors global debug namespace enable calls",
   fn() {
-    equal(debug("test:12345").enabled, false);
-    equal(debug("test:67890").enabled, false);
+    assert.equal(debug("test:12345").enabled, false);
+    assert.equal(debug("test:67890").enabled, false);
 
     debug.enable("test:12345");
-    equal(debug("test:12345").enabled, true);
-    equal(debug("test:67890").enabled, false);
+    assert.equal(debug("test:12345").enabled, true);
+    assert.equal(debug("test:67890").enabled, false);
   }
 });
 
@@ -62,7 +63,7 @@ test({
     log("using custom log function again");
     log("%O", 12345);
 
-    equal(messages.length, 3);
+    assert.equal(messages.length, 3);
   }
 });
 
@@ -76,7 +77,7 @@ test({
     log.log = () => {};
 
     const logBar = log.extend("bar");
-    equal(logBar.namespace, "foo:bar");
+    assert.equal(logBar.namespace, "foo:bar");
   }
 });
 
@@ -88,7 +89,7 @@ test({
     log.log = () => {};
 
     const logBar = log.extend("bar", "--");
-    equal(logBar.namespace, "foo--bar");
+    assert.equal(logBar.namespace, "foo--bar");
   }
 });
 
@@ -124,7 +125,7 @@ test({
     log.enabled = true;
 
     const messages = [];
-    log.log = (str: string) => messages.push(str);
+    log.log = (...args: any[]) => messages.push(args);
 
     log("using custom log function");
     log("using custom log function again");
@@ -214,7 +215,7 @@ test({
     log("using custom log function again");
     log("%O", 12345);
 
-    equal(messages.length, 0);
+    assert.equal(messages.length, 0);
 
     debug.enable("test");
     debug.disable();
@@ -223,7 +224,7 @@ test({
     log("using custom log function again");
     log("%O", 12345);
 
-    equal(messages.length, 0);
+    assert.equal(messages.length, 0);
   }
 });
 
@@ -249,7 +250,7 @@ test({
     const log = debug("test");
     log.enabled = true;
     const messages = [];
-    log.log = (str: string) => messages.push(str);
+    log.log = (...args: any[]) => messages.push(args);
 
     debug.formatters.t = function(v: any) {
       return `test`;
@@ -260,8 +261,8 @@ test({
     log("this is: %t", "this will be ignored");
     log("this is: %w", 5);
 
-    assert(messages[0].includes("this is: test"));
-    assert(messages[1].includes("this is: 10"));
+    assert(messages[0][0].includes("this is: test"));
+    assert(messages[1][0].includes("this is: 10"));
   }
 });
 
@@ -270,7 +271,6 @@ test({
   fn() {
     const log = debug("test");
     log.enabled = true;
-    const messages = [];
     log.log = () => {};
 
     debug.formatters.t = function(v: any) {
@@ -278,5 +278,27 @@ test({
       return `test`;
     };
     log("this is: %t", "this will be ignored");
+  }
+});
+
+// Custom global logger
+
+test({
+  name: "overrides all per-namespace log settings",
+  fn() {
+    const loger1 = debug("test");
+    loger1.enabled = true;
+    const loger2 = debug("test2");
+    loger2.enabled = true;
+
+    const messages = [];
+
+    debug.log = (...args: any[]) => messages.push(args);
+
+    loger1("using custom log function");
+    loger2("using custom log function again");
+    loger1("%O", 12345);
+
+    assert.equal(messages.length, 3);
   }
 });

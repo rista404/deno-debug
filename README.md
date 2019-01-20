@@ -7,6 +7,7 @@ Missing functionality:
 - [x] extending debuggers
 - [x] custom log functions
 - [x] custom formatters
+- [x] `log` override in all namespaces
 - [ ] inspect opts
 - [ ] detecting color support
 - [ ] non-tty env
