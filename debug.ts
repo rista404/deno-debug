@@ -20,9 +20,11 @@ interface DebugInstance {
 // Default export public API
 interface Debug {
   (namespace: string): DebugInstance;
-  enable: (namespaces: string) => void;
-  disable: (namespaces: string) => string;
-  enabled: (namespaces: string) => boolean;
+  enable: (namespaces: any) => void;
+  disable: () => string;
+  enabled: (namespace: string) => boolean;
+  names: RegExp[],
+  skips: RegExp[],
 }
 
 interface Formatters {
@@ -42,6 +44,22 @@ let instances: DebugInstance[] = [];
  */
 let names: RegExp[] = [];
 let skips: RegExp[] = [];
+
+// Default export
+export const debug = createDebug;
+
+let defaultExport: Debug;
+// @ts-ignore
+defaultExport = createDebug;
+Object.assign(defaultExport, {
+  enable,
+  disable,
+  enabled,
+  names,
+  skips,
+});
+
+export default defaultExport;
 
 // Enable namespaces passed from env
 enable(NAMESPACES);
@@ -81,28 +99,31 @@ export function enabled(namespace: string): boolean {
   return false;
 }
 
-export function enable(namespaces: string) {
+export function enable(namespaces: any) {
   updateNamespacesEnv(namespaces);
 
-  // Resets enabled and disable
+  // Resets enabled and disable namespaces
   names = [];
   skips = [];
 
-  const splits = (typeof namespaces === "string" ? namespaces : "").split(
-    /[\s,]+/
-  );
+  // Splits on comma
+  // Loops through the passed namespaces
+  // And groups them in enabled and disabled lists
+  (typeof namespaces === "string" ? namespaces : "")
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .map((namespace) => namespace.replace(/\*/g, ".*?"))
+    .forEach(ns => {
+      // Ignore empty strings
+      if (!ns) return;
 
-  splits.forEach(split => {
-    if (!split) return;
-
-    namespaces = split.replace(/\*/g, ".*?");
-
-    if (namespaces[0] === "-") {
-      skips.push(new RegExp("^" + namespaces.substr(1) + "$"));
-    } else {
-      names.push(new RegExp("^" + namespaces + "$"));
-    }
-  });
+      // If a namespace starts with `-`, we should disable that namespace
+      if (ns[0] === "-") {
+        skips.push(new RegExp("^" + ns.slice(1) + "$"));
+      } else {
+        names.push(new RegExp("^" + ns + "$"));
+      }
+    });
 
   instances.forEach(instance => {
     instance.enabled = enabled(instance.namespace);
@@ -115,7 +136,7 @@ export function enable(namespaces: string) {
 export function disable(): string {
   const namespaces = [
     ...names.map(regexpToNamespace),
-    ...skips.map(regexpToNamespace).map(namespace => "-" + namespace)
+    ...skips.map(regexpToNamespace).map(namespace => `-${namespace}`)
   ].join(",");
   enable("");
   return namespaces;
@@ -177,23 +198,11 @@ function prettifyLog({ namespace, color, diff }: PrettifyLogOptions): LoggerFunc
   }
 }
 
-function defaultLogger(msg: string) {
+function defaultLogger(msg: string): void {
   stderr.write(new TextEncoder().encode(msg + '\n'));
 }
 
 // SINGLE DEBUG INSTANCE
-
-export const debug = createDebug;
-
-let defaultExport: Debug;
-// @ts-ignore
-defaultExport = createDebug;
-Object.assign(defaultExport, {
-  enable,
-  disable,
-  enabled,
-});
-export default defaultExport;
 
 function createDebug(namespace: string): DebugInstance {
   let currTime: number;
