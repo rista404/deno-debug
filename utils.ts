@@ -148,3 +148,17 @@ export function coerce(val: any): any {
   }
   return val;
 }
+
+/**
+ * Convert regexp to namespace
+ *
+ * @param {RegExp} regxep
+ * @return {String} namespace
+ * @api private
+ */
+export function regexpToNamespace(regexp: RegExp): string {
+  return regexp
+    .toString()
+    .substring(2, regexp.toString().length - 2)
+    .replace(/\.\*\?$/, "*");
+}

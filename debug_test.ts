@@ -115,6 +115,28 @@ test({
   }
 });
 
+// log.destroy()
+
+test({
+  name: "destroy works",
+  fn() {
+    const log = debug("test");
+    log.enabled = true;
+
+    const messages = [];
+    log.log = (str: string) => messages.push(str);
+
+    log("using custom log function");
+    log("using custom log function again");
+
+    log.destroy();
+
+    log("using custom log function");
+
+    assert.equal(messages.length, 2);
+  }
+});
+
 // debug.enable
 
 test({

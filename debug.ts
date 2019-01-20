@@ -1,11 +1,7 @@
 import { env, stderr } from "deno";
-import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
-import { selectColor, coerce } from "./utils.ts";
 import format from "./format.ts";
-
-interface DebugFunction {
-  (...args: any[]): void;
-}
+import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
+import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
 
 interface DebugInstance {
   (...args: any[]): void;
@@ -14,11 +10,10 @@ interface DebugInstance {
   color: number;
   destroy: () => boolean;
   extend: (namespace: string, delimiter?: string) => DebugInstance;
-  log: Function | void;
+  log: Function;
 }
 
-// Default export public API
-interface Debug {
+interface DebugModule {
   (namespace: string): DebugInstance;
   enable: (namespaces: any) => void;
   disable: () => string;
@@ -26,48 +21,113 @@ interface Debug {
   names: RegExp[];
   skips: RegExp[];
   formatters: Formatters;
+  // TODO: log override
 }
 
 interface Formatters {
   [key: string]: (value: any) => string;
 }
 
-const currentEnv = env();
-
-/**
- * Active `debug` instances.
- */
 let instances: DebugInstance[] = [];
-/**
- * The currently active debug mode names, and names to skip.
- */
 let names: RegExp[] = [];
 let skips: RegExp[] = [];
+let formatters: Formatters = {};
 
-let formatters = {};
+function createDebug(namespace: string): DebugInstance {
+  let prevTime: number;
 
-createDebug.enable = enable;
-createDebug.disable = disable;
-createDebug.enabled = enabled;
-createDebug.names = names;
-createDebug.skips = skips;
-createDebug.formatters = formatters;
+  let debug: DebugInstance;
 
-const debugExport: Debug = createDebug;
-export default debugExport;
+  // @ts-ignore
+  debug = function(..._args: any[]) {
+    // Skip if debugger is disabled
+    if (!debug.enabled) {
+      return;
+    }
 
-// Enable namespaces passed from env
-enable(currentEnv.DEBUG);
+    let [fmt, ...args] =
+      typeof _args[0] !== "string"
+        ? // If first argument is not a string
+          // add a fmt string of "%O"
+          ["%O", ..._args]
+        : [coerce(_args[0]), ..._args.slice(1)];
+
+    // Set `diff` timestamp
+    const currTime = Number(new Date());
+    // Difference in miliseconds
+    const diff = currTime - (prevTime || currTime);
+    prevTime = currTime;
+
+    // Apply all custom formatters to our arguments
+    const customFormattedArgs = applyFormatters.call(debug, fmt, args);
+
+    const { namespace, color } = debug;
+
+    // Format the string to be logged
+    const prettyLog = prettifyLog({ namespace, color, diff })(
+      ...customFormattedArgs
+    );
+    // Finally, log
+    debug.log(prettyLog);
+  };
+
+  debug.namespace = namespace;
+  debug.color = selectColor(namespace);
+  debug.enabled = enabled(namespace);
+  debug.log = defaultLogger;
+  debug.destroy = destroy;
+  debug.extend = extend;
+
+  instances.push(debug);
+
+  return debug;
+}
+
+function destroy() {
+  if (instances.includes(this)) {
+    this.enabled = false;
+    instances = instances.filter(instance => instance !== this);
+    return true;
+  }
+  return false;
+}
 
 /**
- * Save `namespaces` to env.
+ * const server = debug('server');
+ * const serverHttp = server.extend('http') // server:http
+ * const serverHttpReq = serverHttp.extend('req', '-') // server:http-req
  */
-function updateNamespacesEnv(namespaces: string): void {
-  if (namespaces) {
-    currentEnv.DEBUG = namespaces;
-  } else {
-    delete currentEnv.DEBUG;
-  }
+function extend(subNamespace: string, delimiter: string = ":") {
+  const newNamespace = `${this.namespace}${delimiter}${subNamespace}`;
+  const newDebug = createDebug(newNamespace);
+  // Pass down the custom logger
+  newDebug.log = this.log;
+  return newDebug;
+}
+
+function applyFormatters(fmt: string, args: any[]) {
+  let index = 0;
+  const newFmt = fmt.replace(/%([a-zA-Z%])/g, (match, format) => {
+    // If we encounter an escaped % then don't increase the array index
+    if (match === "%%") {
+      return match;
+    }
+
+    const formatter = formatters[format];
+
+    if (typeof formatter === "function") {
+      const value = args[index];
+      // Remove the argument we used in the custom formatter
+      args = [...args.slice(0, index), ...args.slice(index + 1)];
+      return formatter.call(this, value);
+    }
+
+    index++;
+    return match;
+  });
+
+  // Return the update fmt string and updated args
+  return [newFmt, ...args];
 }
 
 /**
@@ -122,6 +182,23 @@ export function enable(namespaces: any) {
   });
 }
 
+interface PrettifyLogOptions {
+  namespace: string;
+  color: number;
+  diff: number;
+}
+
+function prettifyLog({ namespace, color, diff }: PrettifyLogOptions) {
+  return (...args: any): string => {
+    const colorCode = "\u001B[3" + (color < 8 ? color : "8;5;" + color);
+    const prefix = `  ${colorCode};1m${namespace} \u001B[0m`;
+    const result = `${prefix}${format(...args)} ${colorCode}m+${ms(
+      diff
+    )}${"\u001B[0m"}`;
+    return result;
+  };
+}
+
 /**
  * Disable debug output.
  */
@@ -135,156 +212,32 @@ export function disable(): string {
 }
 
 /**
- * Convert regexp to namespace
- *
- * @param {RegExp} regxep
- * @return {String} namespace
- * @api private
+ * Save `namespaces` to env.
  */
-function regexpToNamespace(regexp: RegExp): string {
-  return regexp
-    .toString()
-    .substring(2, regexp.toString().length - 2)
-    .replace(/\.\*\?$/, "*");
-}
-
-interface PrettifyLogOptions {
-  namespace: string;
-  color: number;
-  diff: number;
-}
-
-interface LoggerFunction {
-  (...args: any): string;
-}
-
-// Usage
-// const prettyLog = prettifyLog({ namespace, color, diff })(debug.log || defaultLog)
-// prettyLog(fmt, ...args)
-//
-// or
-//
-// const prettyLog = prettifyLog({ namespace, color, diff })(fmt, ...args)
-// const logger = debug.log || defaultLog;
-// logger(prettyLog)
-// Deno only
-function prettifyLog({
-  namespace,
-  color,
-  diff
-}: PrettifyLogOptions): LoggerFunction {
-  return (...args: any) => {
-    const colorCode = "\u001B[3" + (color < 8 ? color : "8;5;" + color);
-    const prefix = `  ${colorCode};1m${namespace} \u001B[0m`;
-    const result = `${prefix}${format(...args)} ${colorCode}m+${ms(
-      diff
-    )}${"\u001B[0m"}`;
-    return result;
-  };
+function updateNamespacesEnv(namespaces: string): void {
+  if (namespaces) {
+    env().DEBUG = namespaces;
+  } else {
+    delete env().DEBUG;
+  }
 }
 
 function defaultLogger(msg: string): void {
   stderr.write(new TextEncoder().encode(msg + "\n"));
 }
 
-function applyFormatters(args: any[]): any[] {
-  args[0] = coerce(args[0]);
+// Exports
 
-  if (typeof args[0] !== "string") {
-    // Anything else let's inspect with %O
-    args.unshift("%O");
-  }
+const debug: DebugModule = Object.assign(createDebug, {
+  enable,
+  disable,
+  enabled,
+  names,
+  skips,
+  formatters
+});
 
-  // Apply any `formatters` transformations
-  let index = 0;
-  args[0] = (args[0] as string).replace(/%([a-zA-Z%])/g, (match, format) => {
-    // If we encounter an escaped % then don't increase the array index
-    if (match === "%%") {
-      return match;
-    }
-    index++;
-    const formatter = createDebug.formatters[format];
-    if (typeof formatter === "function") {
-      const val = args[index];
-      match = formatter.call(this, val);
+// Enable namespaces passed from env
+enable(env().DEBUG);
 
-      // Now we need to remove `args[index]` since it's inlined in the `format`
-      args.splice(index, 1);
-      index--;
-    }
-    return match;
-  });
-
-  return args;
-}
-
-// SINGLE DEBUG INSTANCE
-
-function createDebug(namespace: string): DebugInstance {
-  let currTime: number;
-  let prevTime: number;
-  let diff: number;
-  const color = selectColor(namespace);
-
-  let debug: DebugInstance;
-
-  // @ts-ignore
-  debug = function(...args: any[]) {
-    // Skip if debugger is disabled
-    if (!debug.enabled) {
-      return;
-    }
-
-    // Set `diff` timestamp
-    currTime = Number(new Date());
-    // Difference in miliseconds
-    diff = currTime - (prevTime || currTime);
-    prevTime = currTime;
-
-    // Apply all custom formatters to our arguments
-    const customFormattedArgs = applyFormatters.call(debug, args);
-
-    // Format the string to be logged
-    const prettyLog = prettifyLog({ namespace, color, diff })(
-      ...customFormattedArgs
-    );
-    // Use custom logger if set
-    const logger = debug.log || defaultLogger;
-    // Finally, log
-    logger(prettyLog);
-  };
-
-  function destroy() {
-    const index = instances.indexOf(this);
-    if (index !== -1) {
-      instances.splice(index, 1);
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * const server = debug('server');
-   * const serverHttp = server.extend('http') // server:http
-   * const serverHttpReq = serverHttp.extend('req', '-') // server:http-req
-   */
-  function extend(subNamespace: string, delimiter: string = ":") {
-    const newNamespace = `${namespace}${delimiter}${subNamespace}`;
-    const newDebug = createDebug(newNamespace);
-    // Pass down the custom logger
-    newDebug.log = this.log;
-    return newDebug;
-  }
-
-  Object.assign(debug, {
-    namespace,
-    color,
-    destroy,
-    extend,
-    enabled: enabled(namespace)
-  });
-
-  instances.push(debug);
-
-  return debug;
-}
+export default debug;
