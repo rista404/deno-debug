@@ -1,13 +1,19 @@
 // Copied from https://github.com/defunctzombie/node-util/blob/master/util.js
 // Modified to format %o and %O as deno objects
 import { inspect } from "deno";
-import { coerce } from "./utils.ts";
 const formatRegExp = /%[sdjoO%]/g;
 
-export default function format(..._args: any[]) {
+export default function format(...args: any[]) {
+  if (typeof args[0] !== "string") {
+    let objects = [];
+    for (let i = 0; i < arguments.length; i++) {
+      objects.push(inspect(arguments[i]));
+    }
+    return objects.join(" ");
+  }
+
   let i = 1;
-  const f = coerce(_args[0]);
-  const args = _args.slice(1);
+  const f = args[0];
   const len = args.length;
   let str = String(f).replace(formatRegExp, function(x) {
     if (x === "%%") return "%";
@@ -30,7 +36,7 @@ export default function format(..._args: any[]) {
         return x;
     }
   });
-  for (var x = args[i]; i < len; x = args[++i]) {
+  for (let x = args[i]; i < len; x = args[++i]) {
     if (x == null || typeof x !== "object") {
       str += " " + x;
     } else {
