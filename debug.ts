@@ -1,6 +1,6 @@
 import { env, stderr } from "deno";
 import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
-import { selectColor, getInspectOpts } from "./utils.ts";
+import { selectColor, coerce } from "./utils.ts";
 import format from "./format.ts";
 
 interface DebugFunction {
@@ -25,6 +25,7 @@ interface Debug {
   enabled: (namespace: string) => boolean;
   names: RegExp[];
   skips: RegExp[];
+  formatters: Formatters;
 }
 
 interface Formatters {
@@ -43,19 +44,20 @@ let instances: DebugInstance[] = [];
 let names: RegExp[] = [];
 let skips: RegExp[] = [];
 
+let formatters = {};
+
 createDebug.enable = enable;
 createDebug.disable = disable;
 createDebug.enabled = enabled;
 createDebug.names = names;
 createDebug.skips = skips;
+createDebug.formatters = formatters;
 
-const debug: Debug = createDebug;
-export default debug;
+const debugExport: Debug = createDebug;
+export default debugExport;
 
 // Enable namespaces passed from env
 enable(currentEnv.DEBUG);
-
-const inspectOpts = getInspectOpts();
 
 /**
  * Save `namespaces` to env.
@@ -153,7 +155,7 @@ interface PrettifyLogOptions {
 }
 
 interface LoggerFunction {
-  (...args: any): void;
+  (...args: any): string;
 }
 
 // Usage
@@ -165,6 +167,7 @@ interface LoggerFunction {
 // const prettyLog = prettifyLog({ namespace, color, diff })(fmt, ...args)
 // const logger = debug.log || defaultLog;
 // logger(prettyLog)
+// Deno only
 function prettifyLog({
   namespace,
   color,
@@ -182,6 +185,37 @@ function prettifyLog({
 
 function defaultLogger(msg: string): void {
   stderr.write(new TextEncoder().encode(msg + "\n"));
+}
+
+function applyFormatters(args: any[]): any[] {
+  args[0] = coerce(args[0]);
+
+  if (typeof args[0] !== "string") {
+    // Anything else let's inspect with %O
+    args.unshift("%O");
+  }
+
+  // Apply any `formatters` transformations
+  let index = 0;
+  args[0] = (args[0] as string).replace(/%([a-zA-Z%])/g, (match, format) => {
+    // If we encounter an escaped % then don't increase the array index
+    if (match === "%%") {
+      return match;
+    }
+    index++;
+    const formatter = createDebug.formatters[format];
+    if (typeof formatter === "function") {
+      const val = args[index];
+      match = formatter.call(this, val);
+
+      // Now we need to remove `args[index]` since it's inlined in the `format`
+      args.splice(index, 1);
+      index--;
+    }
+    return match;
+  });
+
+  return args;
 }
 
 // SINGLE DEBUG INSTANCE
@@ -207,8 +241,13 @@ function createDebug(namespace: string): DebugInstance {
     diff = currTime - (prevTime || currTime);
     prevTime = currTime;
 
+    // Apply all custom formatters to our arguments
+    const customFormattedArgs = applyFormatters.call(debug, args);
+
     // Format the string to be logged
-    const prettyLog = prettifyLog({ namespace, color, diff })(...args);
+    const prettyLog = prettifyLog({ namespace, color, diff })(
+      ...customFormattedArgs
+    );
     // Use custom logger if set
     const logger = debug.log || defaultLogger;
     // Finally, log

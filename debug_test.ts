@@ -126,6 +126,19 @@ test({
   }
 });
 
+test({
+  name: "enable works",
+  fn() {
+    assert.equal(debug.enabled("test"), false);
+
+    debug.enable("test");
+    assert.equal(debug.enabled("test"), true);
+
+    debug.disable();
+    assert.equal(debug.enabled("test"), false);
+  }
+});
+
 // debug.disable
 
 test({
@@ -171,7 +184,6 @@ test({
   fn() {
     debug.enable("-*");
     const log = debug("test");
-    log.enabled = true;
 
     const messages = [];
     log.log = (...args: any[]) => messages.push(args);
@@ -204,5 +216,45 @@ test({
     debug.enable(namespaces);
     assert.equal(oldNames.map(String), debug.names.map(String));
     assert.equal(oldSkips.map(String), debug.skips.map(String));
+  }
+});
+
+// custom formatters
+
+test({
+  name: "adds a custom formatter",
+  fn() {
+    const log = debug("test");
+    log.enabled = true;
+    const messages = [];
+    log.log = (str: string) => messages.push(str);
+
+    debug.formatters.t = function(v: any) {
+      return `test`;
+    };
+    debug.formatters.w = v => {
+      return v + 5;
+    };
+    log("this is: %t", "this will be ignored");
+    log("this is: %w", 5);
+
+    assert(messages[0].includes("this is: test"));
+    assert(messages[1].includes("this is: 10"));
+  }
+});
+
+test({
+  name: "formatters can access logger on this",
+  fn() {
+    const log = debug("test");
+    log.enabled = true;
+    const messages = [];
+    log.log = () => {};
+
+    debug.formatters.t = function(v: any) {
+      assert.strictEqual(this, log);
+      return `test`;
+    };
+    log("this is: %t", "this will be ignored");
   }
 });
