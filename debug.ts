@@ -3,6 +3,10 @@ import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
 import { selectColor, getInspectOpts } from "./utils.ts";
 import format from "./format.ts";
 
+interface DebugFunction {
+  (...args: any[]): void;
+}
+
 interface DebugInstance {
   (...args: any[]): void;
   namespace: string;
@@ -10,23 +14,15 @@ interface DebugInstance {
   color: number;
   destroy: () => boolean;
   extend: (namespace: string, delimiter?: string) => DebugInstance;
-  log: Function;
-  // Private
-  diff: number;
-  prev: number;
-  curr: number;
+  log: Function | void;
 }
 
+// Default export public API
 interface Debug {
   (namespace: string): DebugInstance;
-  // For reference only
-  names: RegExp[];
-  skips: RegExp[];
-  instances: DebugInstance[];
   enable: (namespaces: string) => void;
   disable: (namespaces: string) => string;
   enabled: (namespaces: string) => boolean;
-  coerce: (namespaces: string) => boolean;
 }
 
 interface Formatters {
@@ -88,6 +84,7 @@ export function enabled(namespace: string): boolean {
 export function enable(namespaces: string) {
   updateNamespacesEnv(namespaces);
 
+  // Resets enabled and disable
   names = [];
   skips = [];
 
@@ -152,41 +149,63 @@ function coerce(val: any): any {
   return val;
 }
 
-function log(fmt: string, ...args: any): void {
-  const { namespace: name, color: c } = this;
-  const colorCode = "\u001B[3" + (c < 8 ? c : "8;5;" + c);
-  const prefix = `  ${colorCode};1m${name} \u001B[0m`;
-  const result = `${prefix}${format(fmt, ...args)} ${colorCode}m+${ms(
-    this.diff
-  )}${"\u001B[0m"}`;
-  console.log(result);
+interface PrettifyLogOptions {
+  namespace: string,
+  color: number,
+  diff: number,
+}
+
+interface LoggerFunction {
+  (fmt: string, ...args: any): void,
+}
+
+function prettifyLog({ namespace, color, diff }: PrettifyLogOptions): LoggerFunction {
+  return (fmt: string, ...args: any) => {
+    const colorCode = "\u001B[3" + (color < 8 ? color : "8;5;" + color);
+    const prefix = `  ${colorCode};1m${namespace} \u001B[0m`;
+    const result = `${prefix}${format(fmt, ...args)} ${colorCode}m+${ms(diff)}${"\u001B[0m"}`;
+    console.log(result);
+  }
 }
 
 // SINGLE DEBUG INSTANCE
 
-export default function createDebug(namespace: string): DebugInstance {
+export const debug = createDebug;
+
+let defaultExport: Debug;
+// @ts-ignore
+defaultExport = createDebug;
+Object.assign(defaultExport, {
+  enable,
+  disable,
+  enabled,
+});
+export default defaultExport;
+
+function createDebug(namespace: string): DebugInstance {
+  let currTime: number;
   let prevTime: number;
+  let diff: number;
+  const color = selectColor(namespace);
 
   let debug: DebugInstance;
+
   // @ts-ignore
   debug = function(fmt: string, ...args: any[]) {
-    // Disabled?
+    // Skip if debugger is disabled
     if (!debug.enabled) {
       return;
     }
 
-    const self = debug;
-
     // Set `diff` timestamp
-    const curr = Number(new Date());
-    const ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
+    currTime = Number(new Date());
+    // Difference in miliseconds
+    diff = currTime - (prevTime || currTime);
+    prevTime = currTime;
 
-    const logFn = self.log || log;
-    logFn.apply(self, [fmt, ...args]);
+    // TODO: Custom log function
+    const prettyLog = prettifyLog({ namespace, color, diff })
+    prettyLog(fmt, ...args)
   };
 
   function destroy() {
@@ -198,21 +217,26 @@ export default function createDebug(namespace: string): DebugInstance {
     return false;
   }
 
-  function extend(namespace: string, delimiter?: string) {
-    const newDebug = createDebug(
-      this.namespace +
-        (typeof delimiter === "undefined" ? ":" : delimiter) +
-        namespace
-    );
+  /**
+   * const server = debug('server');
+   * const serverHttp = server.extend('http') // server:http
+   * const serverHttpReq = serverHttp.extend('req', '-') // server:http-req
+   */
+  function extend(subNamespace: string, delimiter: string = ":") {
+    const newNamespace = `${namespace}${delimiter}${subNamespace}`
+    const newDebug = createDebug(newNamespace);
+    // Pass down the custom logger
     newDebug.log = this.log;
     return newDebug;
   }
 
-  debug.namespace = namespace;
-  debug.enabled = enabled(namespace);
-  debug.color = selectColor(namespace);
-  debug.destroy = destroy;
-  debug.extend = extend;
+  Object.assign(debug, {
+    namespace,
+    color,
+    destroy,
+    extend,
+    enabled: enabled(namespace),
+  })
 
   instances.push(debug);
 

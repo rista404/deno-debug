@@ -4,7 +4,7 @@ Under development. Porting from https://github.com/visionmedia/debug
 
 Missing functionality:
 
-- [ ] extending debuggers
+- [x] extending debuggers
 - [ ] custom formatters
 - [ ] inspect opts
 - [ ] detecting color support
