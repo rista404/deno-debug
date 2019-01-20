@@ -1,5 +1,8 @@
 all: fmt test
 
+demo:
+	DEBUG=* deno --allow-env ./demo.ts
+
 test:
 	DEBUG=* deno --allow-env ./test.ts
 

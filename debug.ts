@@ -1,4 +1,4 @@
-import { env } from "deno";
+import { env, stderr } from "deno";
 import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
 import { selectColor, getInspectOpts } from "./utils.ts";
 import format from "./format.ts";
@@ -159,13 +159,26 @@ interface LoggerFunction {
   (fmt: string, ...args: any): void,
 }
 
+// Usage
+// const prettyLog = prettifyLog({ namespace, color, diff })(debug.log || defaultLog)
+// prettyLog(fmt, ...args)
+// 
+// or
+// 
+// const prettyLog = prettifyLog({ namespace, color, diff })(fmt, ...args)
+// const logger = debug.log || defaultLog;
+// logger(prettyLog)
 function prettifyLog({ namespace, color, diff }: PrettifyLogOptions): LoggerFunction {
   return (fmt: string, ...args: any) => {
     const colorCode = "\u001B[3" + (color < 8 ? color : "8;5;" + color);
     const prefix = `  ${colorCode};1m${namespace} \u001B[0m`;
     const result = `${prefix}${format(fmt, ...args)} ${colorCode}m+${ms(diff)}${"\u001B[0m"}`;
-    console.log(result);
+    return result;
   }
+}
+
+function defaultLogger(msg: string) {
+  stderr.write(new TextEncoder().encode(msg + '\n'));
 }
 
 // SINGLE DEBUG INSTANCE
@@ -203,9 +216,12 @@ function createDebug(namespace: string): DebugInstance {
     diff = currTime - (prevTime || currTime);
     prevTime = currTime;
 
-    // TODO: Custom log function
-    const prettyLog = prettifyLog({ namespace, color, diff })
-    prettyLog(fmt, ...args)
+    // Format the string to be logged
+    const prettyLog = prettifyLog({ namespace, color, diff })(fmt, ...args);
+    // Use custom logger if set
+    const logger = debug.log || defaultLogger;
+    // Finally, log
+    logger(prettyLog)
   };
 
   function destroy() {
