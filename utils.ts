@@ -134,3 +134,17 @@ export function getInspectOpts(): InspectOpts {
     }, {});
   return inspectOpts;
 }
+
+/**
+ * Coerce `val`.
+ *
+ * @param {Mixed} val
+ * @return {Mixed}
+ * @api private
+ */
+export function coerce(val: any): any {
+  if (val instanceof Error) {
+    return val.stack || val.message;
+  }
+  return val;
+}

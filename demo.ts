@@ -1,5 +1,3 @@
-import { env } from "deno";
-// import { debug as, enable } from "./debug.ts";
 import debug from "./debug.ts";
 
 // Not actually a test, more of a demo
@@ -31,11 +29,11 @@ server("my name is %s", "deno server", 5);
 
 debug.enable("*");
 
-const workerHttp = worker.extend('http');
-workerHttp('Hello from extended worker');
+const workerHttp = worker.extend("http");
+workerHttp("Hello from extended worker");
 
-const workerTcp = worker.extend('tcp', '-');
-workerTcp('Hello from extended worker with custom delimiter');
+const workerTcp = worker.extend("tcp", "-");
+workerTcp("Hello from extended worker with custom delimiter");
 
 worker("foo bar");
 

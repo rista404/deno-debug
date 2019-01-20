@@ -23,8 +23,8 @@ interface Debug {
   enable: (namespaces: any) => void;
   disable: () => string;
   enabled: (namespace: string) => boolean;
-  names: RegExp[],
-  skips: RegExp[],
+  names: RegExp[];
+  skips: RegExp[];
 }
 
 interface Formatters {
@@ -32,8 +32,6 @@ interface Formatters {
 }
 
 const currentEnv = env();
-
-const NAMESPACES = currentEnv.DEBUG;
 
 /**
  * Active `debug` instances.
@@ -45,24 +43,17 @@ let instances: DebugInstance[] = [];
 let names: RegExp[] = [];
 let skips: RegExp[] = [];
 
-// Default export
-export const debug = createDebug;
+createDebug.enable = enable;
+createDebug.disable = disable;
+createDebug.enabled = enabled;
+createDebug.names = names;
+createDebug.skips = skips;
 
-let defaultExport: Debug;
-// @ts-ignore
-defaultExport = createDebug;
-Object.assign(defaultExport, {
-  enable,
-  disable,
-  enabled,
-  names,
-  skips,
-});
-
-export default defaultExport;
+const debug: Debug = createDebug;
+export default debug;
 
 // Enable namespaces passed from env
-enable(NAMESPACES);
+enable(currentEnv.DEBUG);
 
 const inspectOpts = getInspectOpts();
 
@@ -111,8 +102,7 @@ export function enable(namespaces: any) {
   // And groups them in enabled and disabled lists
   (typeof namespaces === "string" ? namespaces : "")
     .split(/[\s,]+/)
-    .filter(Boolean)
-    .map((namespace) => namespace.replace(/\*/g, ".*?"))
+    .map(namespace => namespace.replace(/\*/g, ".*?"))
     .forEach(ns => {
       // Ignore empty strings
       if (!ns) return;
@@ -156,50 +146,42 @@ function regexpToNamespace(regexp: RegExp): string {
     .replace(/\.\*\?$/, "*");
 }
 
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-function coerce(val: any): any {
-  if (val instanceof Error) {
-    return val.stack || val.message;
-  }
-  return val;
-}
-
 interface PrettifyLogOptions {
-  namespace: string,
-  color: number,
-  diff: number,
+  namespace: string;
+  color: number;
+  diff: number;
 }
 
 interface LoggerFunction {
-  (fmt: string, ...args: any): void,
+  (...args: any): void;
 }
 
 // Usage
 // const prettyLog = prettifyLog({ namespace, color, diff })(debug.log || defaultLog)
 // prettyLog(fmt, ...args)
-// 
+//
 // or
-// 
+//
 // const prettyLog = prettifyLog({ namespace, color, diff })(fmt, ...args)
 // const logger = debug.log || defaultLog;
 // logger(prettyLog)
-function prettifyLog({ namespace, color, diff }: PrettifyLogOptions): LoggerFunction {
-  return (fmt: string, ...args: any) => {
+function prettifyLog({
+  namespace,
+  color,
+  diff
+}: PrettifyLogOptions): LoggerFunction {
+  return (...args: any) => {
     const colorCode = "\u001B[3" + (color < 8 ? color : "8;5;" + color);
     const prefix = `  ${colorCode};1m${namespace} \u001B[0m`;
-    const result = `${prefix}${format(fmt, ...args)} ${colorCode}m+${ms(diff)}${"\u001B[0m"}`;
+    const result = `${prefix}${format(...args)} ${colorCode}m+${ms(
+      diff
+    )}${"\u001B[0m"}`;
     return result;
-  }
+  };
 }
 
 function defaultLogger(msg: string): void {
-  stderr.write(new TextEncoder().encode(msg + '\n'));
+  stderr.write(new TextEncoder().encode(msg + "\n"));
 }
 
 // SINGLE DEBUG INSTANCE
@@ -213,7 +195,7 @@ function createDebug(namespace: string): DebugInstance {
   let debug: DebugInstance;
 
   // @ts-ignore
-  debug = function(fmt: string, ...args: any[]) {
+  debug = function(...args: any[]) {
     // Skip if debugger is disabled
     if (!debug.enabled) {
       return;
@@ -226,11 +208,11 @@ function createDebug(namespace: string): DebugInstance {
     prevTime = currTime;
 
     // Format the string to be logged
-    const prettyLog = prettifyLog({ namespace, color, diff })(fmt, ...args);
+    const prettyLog = prettifyLog({ namespace, color, diff })(...args);
     // Use custom logger if set
     const logger = debug.log || defaultLogger;
     // Finally, log
-    logger(prettyLog)
+    logger(prettyLog);
   };
 
   function destroy() {
@@ -248,7 +230,7 @@ function createDebug(namespace: string): DebugInstance {
    * const serverHttpReq = serverHttp.extend('req', '-') // server:http-req
    */
   function extend(subNamespace: string, delimiter: string = ":") {
-    const newNamespace = `${namespace}${delimiter}${subNamespace}`
+    const newNamespace = `${namespace}${delimiter}${subNamespace}`;
     const newDebug = createDebug(newNamespace);
     // Pass down the custom logger
     newDebug.log = this.log;
@@ -260,8 +242,8 @@ function createDebug(namespace: string): DebugInstance {
     color,
     destroy,
     extend,
-    enabled: enabled(namespace),
-  })
+    enabled: enabled(namespace)
+  });
 
   instances.push(debug);
 
