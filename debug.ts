@@ -83,12 +83,16 @@ function createDebug(namespace: string): DebugInstance {
 
     const { namespace, color } = self;
 
-    // Format the string to be logged
+    // Format the string before logging
     const formattedArgs = formatArgs(
       { namespace, color, diff },
       customFormattedArgs
     );
+
+    // Use a custom logger if defined
+    // If not, we use the default logger
     const logFn = self.log || debugModule.log;
+
     // Finally, log
     logFn.apply(self, formattedArgs);
   };

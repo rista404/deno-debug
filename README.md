@@ -1,13 +1,20 @@
 # Debug utility for deno
 
-Under development. Porting from https://github.com/visionmedia/debug
+Under development.
 
-Missing functionality:
+### Todo:
 
 - [x] extending debuggers
 - [x] custom log functions
 - [x] custom formatters
 - [x] `log` override in all namespaces
-- [ ] inspect opts
+- [x] inspect opts
 - [ ] detecting color support
 - [ ] non-tty env
+
+### Notes
+
+- Currently debug assumes it is TTY and shows colors by default.
+- Deno's `inspect` differs from node's `util.inspect` so the output may not be the same.
+- We're using a custom `format` function ported from `util`. Might be cool to extract it when `util` is ported entirely.
+- We should cover more functionality with tests.

@@ -97,7 +97,8 @@ export function selectColor(namespace: string): number {
 
 /**
  * Build up the default `inspectOpts` object from the environment variables.
- * Used in `util.inspect` in node. Should find an alternative in deno.
+ * Used in `deno.inspect` in node.
+ * Checkout deno source code for `inspect`: https://github.com/denoland/deno/blob/master/js/console.ts
  *
  * $ DEBUG_COLORS=no DEBUG_DEPTH=10 DEBUG_SHOW_HIDDEN=enabled node script.js
  */

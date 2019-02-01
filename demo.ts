@@ -1,7 +1,7 @@
 import debug from "./debug.ts";
 
 // Not actually a test, more of a demo
-// Should add testing
+// Should improve it
 
 const server = debug("deno:server");
 const dotenv = debug("dotenv");
@@ -36,6 +36,14 @@ const workerTcp = worker.extend("tcp", "-");
 workerTcp("Hello from extended worker with custom delimiter");
 
 worker("foo bar");
+
+const nestedObj: any = { a: { b: { c: { d: { e: { f: 42 } } } } } };
+workerHttp("Nested object: %O", nestedObj);
+
+const obj = { a: 1 };
+const obj2 = { b: 2 };
+const weakSet = new WeakSet([obj, obj2]);
+worker("Object with hidden fields: %O", weakSet);
 
 workerTcp(`multi
 line
