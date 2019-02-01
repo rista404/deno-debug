@@ -1,0 +1,13 @@
+language: python
+
+install:
+  - curl -L https://deno.land/x/install/install.sh | sh
+  - export PATH="$HOME/.deno/bin:$PATH"
+
+script:
+  - deno --version
+  - make test
+
+cache:
+  directories:
+    - "$HOME/.deno"
