@@ -1,4 +1,4 @@
-# Deno Debug [![Build Status](https://travis-ci.com/rista404/deno-debug.svg?branch=master)](https://travis-ci.com/rista404/deno-debug)
+# Deno Debug [![Build Status](https://travis-ci.org/rista404/deno-debug.svg?branch=master)](https://travis-ci.org/rista404/deno-debug)
 
 Debug utility for deno. Under development.
 
