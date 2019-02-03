@@ -1,5 +1,7 @@
 # Deno Debug [![Build Status](https://travis-ci.org/rista404/deno-debug.svg?branch=master)](https://travis-ci.org/rista404/deno-debug)
 
+<img width="647" src="demo.png">
+
 Debug utility for deno. Under development.
 
 ### Todo:
