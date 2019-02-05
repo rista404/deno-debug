@@ -4,7 +4,27 @@
 
 Debug utility for deno. Under development.
 
-### Todo:
+## Usage
+
+```javascript
+import debug from 'https://raw.githubusercontent.com/rista404/deno-debug/master/debug.ts'
+
+// create debugger
+const service = debug('service')
+
+const serviceName = 'app'
+
+// log
+service('booting %s', serviceName)
+```
+
+Then run your app.
+```sh
+> DEBUG=* deno --allow-env app.ts
+```
+
+
+## Todo
 
 - [x] extending debuggers
 - [x] custom log functions
@@ -13,8 +33,9 @@ Debug utility for deno. Under development.
 - [x] inspect opts
 - [ ] detecting color support
 - [ ] non-tty env
+- [ ] add `debug` to registry 
 
-### Notes
+## Notes
 
 - Currently debug assumes it is TTY and shows colors by default.
 - Deno's `inspect` differs from node's `util.inspect` so the output may not be the same.
