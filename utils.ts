@@ -1,5 +1,5 @@
-import { env } from "deno";
-import { camelCase } from "https://raw.githubusercontent.com/denolib/camelcase/master/index.ts";
+const { env } = Deno;
+import { camelCase } from "https://raw.githubusercontent.com/denolib/camelcase/master/mod.ts";
 
 // We assume the terminal supports colors
 export const colors = [

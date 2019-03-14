@@ -7,22 +7,22 @@ Debug utility for deno. Under development.
 ## Usage
 
 ```javascript
-import debug from 'https://raw.githubusercontent.com/rista404/deno-debug/master/debug.ts'
+import debug from "https://raw.githubusercontent.com/rista404/deno-debug/master/debug.ts";
 
 // create debugger
-const service = debug('service')
+const service = debug("service");
 
-const serviceName = 'app'
+const serviceName = "app";
 
 // log
-service('booting %s', serviceName)
+service("booting %s", serviceName);
 ```
 
 Then run your app.
+
 ```sh
 > DEBUG=* deno --allow-env app.ts
 ```
-
 
 ## Todo
 
@@ -33,7 +33,7 @@ Then run your app.
 - [x] inspect opts
 - [ ] detecting color support
 - [ ] non-tty env
-- [ ] add `debug` to registry 
+- [ ] add `debug` to registry
 
 ## Notes
 

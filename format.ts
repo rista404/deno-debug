@@ -1,6 +1,6 @@
 // Copied from https://github.com/defunctzombie/node-util/blob/master/util.js
 // Modified to format %o and %O as deno objects
-import { inspect } from "deno";
+const { inspect } = Deno;
 import { getInspectOpts } from "./utils.ts";
 
 const inspectOpts = getInspectOpts();

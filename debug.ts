@@ -1,6 +1,6 @@
 // Adapted from https://github.com/visionmedia/debug/blob/master/src/index.js
 
-import { env, stderr } from "deno";
+const { env, stderr } = Deno;
 import format from "./format.ts";
 import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
 import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
