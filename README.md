@@ -1,13 +1,13 @@
 # Deno Debug [![Build Status](https://travis-ci.org/rista404/deno-debug.svg?branch=master)](https://travis-ci.org/rista404/deno-debug)
 
-<img width="647" src="demo.png">
+<img width="647" src="https://raw.githubusercontent.com/rista404/deno-debug/master/demo.png">
 
 Debug utility for deno. Under development.
 
 ## Usage
 
 ```javascript
-import debug from "https://raw.githubusercontent.com/rista404/deno-debug/master/debug.ts";
+import debug from "https://deno.land/x/debuglog/debug.ts";
 
 // create debugger
 const service = debug("service");
@@ -33,7 +33,7 @@ Then run your app.
 - [x] inspect opts
 - [ ] detecting color support
 - [ ] non-tty env
-- [ ] add `debug` to registry
+- [x] add `debug` to registry
 
 ## Notes
 

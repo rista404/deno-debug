@@ -1,5 +1,9 @@
-import { test } from "https://deno.land/x/testing/mod.ts";
-import { assert, assertEquals, assertStrictEq } from "https://deno.land/std/testing/asserts.ts";
+import { test } from "https://deno.land/std@v0.3.0/testing/mod.ts";
+import {
+  assert,
+  assertEquals,
+  assertStrictEq
+} from "https://deno.land/std/testing/asserts.ts";
 import debug from "./debug.ts";
 
 test({
@@ -7,7 +11,7 @@ test({
   fn() {
     const log = debug("test");
     log.enabled = true;
-    log.log = () => { };
+    log.log = () => {};
 
     log("hello world");
   }
@@ -18,7 +22,7 @@ test({
   fn() {
     const log = debug("test");
     log.enabled = true;
-    log.log = () => { };
+    log.log = () => {};
 
     debug.enable(true);
   }
@@ -75,7 +79,7 @@ test({
   fn() {
     const log = debug("foo");
     log.enabled = true;
-    log.log = () => { };
+    log.log = () => {};
 
     const logBar = log.extend("bar");
     assertEquals(logBar.namespace, "foo:bar");
@@ -87,7 +91,7 @@ test({
   fn() {
     const log = debug("foo");
     log.enabled = true;
-    log.log = () => { };
+    log.log = () => {};
 
     const logBar = log.extend("bar", "--");
     assertEquals(logBar.namespace, "foo--bar");
@@ -99,7 +103,7 @@ test({
   fn() {
     const log = debug("foo");
     log.enabled = true;
-    log.log = () => { };
+    log.log = () => {};
 
     const logBar = log.extend("bar", "");
     assertStrictEq(logBar.namespace, "foobar");
@@ -110,7 +114,7 @@ test({
   name: "extend should keep the log function between extensions",
   fn() {
     const log = debug("foo");
-    log.log = () => { };
+    log.log = () => {};
 
     const logBar = log.extend("bar");
     assertStrictEq(log.log, logBar.log);
@@ -253,7 +257,7 @@ test({
     const messages = [];
     log.log = (...args: any[]) => messages.push(args);
 
-    debug.formatters.t = function (v: any) {
+    debug.formatters.t = function(v: any) {
       return `test`;
     };
     debug.formatters.w = v => {
@@ -272,9 +276,9 @@ test({
   fn() {
     const log = debug("test");
     log.enabled = true;
-    log.log = () => { };
+    log.log = () => {};
 
-    debug.formatters.t = function (v: any) {
+    debug.formatters.t = function(v: any) {
       assertStrictEq(this, log);
       return `test`;
     };
