@@ -1,6 +1,10 @@
 // Copied from https://github.com/defunctzombie/node-util/blob/master/test/node/format.js
-import { test } from "https://deno.land/x/testing/mod.ts";
-import { assert, assertEquals, assertStrictEq } from "https://deno.land/std/testing/asserts.ts";
+import { test } from "https://deno.land/std@v0.3.0/testing/mod.ts";
+import {
+  assert,
+  assertEquals,
+  assertStrictEq
+} from "https://deno.land/std/testing/asserts.ts";
 import format from "./format.ts";
 
 test(function testFormat() {
@@ -39,7 +43,7 @@ test(function testFormat() {
   assertEquals(format("%%%s%%", "hi"), "%hi%");
   assertEquals(format("%%%s%%%%", "hi"), "%hi%%");
 
-  (function () {
+  (function() {
     let o: { o?: any } = {};
     o.o = o;
     assertEquals(format("%j", o), "[Circular]");
