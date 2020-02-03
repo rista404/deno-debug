@@ -2,7 +2,7 @@
 
 <img width="647" src="https://raw.githubusercontent.com/rista404/deno-debug/master/demo.png">
 
-Debug utility for deno. Under development.
+Debug utility for deno.
 
 ## Usage
 
