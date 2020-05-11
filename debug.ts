@@ -1,4 +1,4 @@
-const { env, stderr } = Deno;
+const { noColor, env, stderr } = Deno;
 import format from "./format.ts";
 import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
 
@@ -188,8 +188,8 @@ export function enable(namespaces: any) {
 
   // Resets enabled and disable namespaces
   names = [];
-  skips = []; // Splits on comma
-  // Loops through the passed namespaces
+  skips = [] // Splits on comma
+  ; // Loops through the passed namespaces
   // And groups them in enabled and disabled lists
   (typeof namespaces === "string" ? namespaces : "")
     .split(/[\s,]+/)
@@ -221,14 +221,16 @@ function formatArgs(
   args: any[],
 ): any[] {
   const colorCode = "\u001B[3" + (color < 8 ? color : "8;5;" + color);
-  const prefix = `  ${colorCode};1m${namespace} \u001B[0m`;
+  const prefix = noColor
+    ? `  ${namespace} `
+    : `  ${colorCode};1m${namespace} \u001B[0m`;
   // Add a prefix on every line
   args[0] = args[0]
     .split("\n")
     .map((line: string) => `${prefix}${line}`)
     .join("\n");
 
-  const lastArg = `${colorCode}m+${diff}${"\u001B[0m"}`;
+  const lastArg = noColor ? `+${diff}` : `${colorCode}m+${diff}${"\u001B[0m"}`;
 
   return [...args, lastArg];
 }

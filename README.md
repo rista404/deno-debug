@@ -31,7 +31,7 @@ Then run your app.
 - [x] custom formatters
 - [x] `log` override in all namespaces
 - [x] inspect opts
-- [ ] detecting color support
+- [x] detecting color support
 - [ ] non-tty env
 - [x] add `debug` to registry
 
