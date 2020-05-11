@@ -1,13 +1,12 @@
 // Copied from https://github.com/defunctzombie/node-util/blob/master/test/node/format.js
-import { test } from "https://deno.land/std@v0.3.0/testing/mod.ts";
 import {
   assert,
   assertEquals,
   assertStrictEq
-} from "https://deno.land/std/testing/asserts.ts";
+} from "https://deno.land/std@v0.50.0/testing/asserts.ts";
 import format from "./format.ts";
 
-test(function testFormat() {
+Deno.test('testFormat', function () {
   assertEquals(format(), "");
   assertEquals(format(""), "");
   assertEquals(format([]), "[]");
