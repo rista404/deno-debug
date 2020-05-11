@@ -3,7 +3,7 @@ import format from "./format.ts";
 import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
 
 interface DebugInstance {
-  (log: string | Error, ...args: any[]): void
+  (log: string | Error, ...args: any[]): void;
   namespace: string;
   enabled: boolean;
   color: number;
@@ -54,10 +54,10 @@ function createDebug(namespace: string): DebugInstance {
   let debug: DebugInstance;
 
   // @ts-ignore-next-line
-  debug = function(log: string | Error, ...args: any[]) {
+  debug = function (log: string | Error, ...args: any[]) {
     // Skip if debugger is disabled
     if (!debug.enabled) {
-      return
+      return;
     }
 
     const self = debug;
@@ -67,7 +67,7 @@ function createDebug(namespace: string): DebugInstance {
     if (typeof log !== "string") {
       // Anything else let's inspect with %O
       args.unshift(log);
-      log = "%O"
+      log = "%O";
     }
 
     // Set `diff` timestamp
@@ -83,7 +83,7 @@ function createDebug(namespace: string): DebugInstance {
     // Format the string before logging
     const formattedArgs = formatArgs(
       { namespace, color, diff },
-      customFormattedArgs
+      customFormattedArgs,
     );
 
     // Use a custom logger if defined
@@ -92,7 +92,7 @@ function createDebug(namespace: string): DebugInstance {
 
     // Finally, log
     logFn.apply(self, formattedArgs);
-    return
+    return;
   };
 
   debug.namespace = namespace;
@@ -109,7 +109,7 @@ function createDebug(namespace: string): DebugInstance {
 function destroy() {
   if (instances.includes(this)) {
     this.enabled = false;
-    instances = instances.filter(instance => instance !== this);
+    instances = instances.filter((instance) => instance !== this);
     return true;
   }
   return false;
@@ -193,8 +193,8 @@ export function enable(namespaces: any) {
     .split(/[\s,]+/)
     // Ignore empty strings
     .filter(Boolean)
-    .map(namespace => namespace.replace(/\*/g, ".*?"))
-    .forEach(ns => {
+    .map((namespace) => namespace.replace(/\*/g, ".*?"))
+    .forEach((ns) => {
       // If a namespace starts with `-`, we should disable that namespace
       if (ns[0] === "-") {
         skips.push(new RegExp("^" + ns.slice(1) + "$"));
@@ -203,7 +203,7 @@ export function enable(namespaces: any) {
       }
     });
 
-  instances.forEach(instance => {
+  instances.forEach((instance) => {
     instance.enabled = enabled(instance.namespace);
   });
 }
@@ -216,7 +216,7 @@ interface FormatArgsOptions {
 
 function formatArgs(
   { namespace, color, diff }: FormatArgsOptions,
-  args: any[]
+  args: any[],
 ): any[] {
   const colorCode = "\u001B[3" + (color < 8 ? color : "8;5;" + color);
   const prefix = `  ${colorCode};1m${namespace} \u001B[0m`;
@@ -237,7 +237,7 @@ function formatArgs(
 export function disable(): string {
   const namespaces = [
     ...names.map(regexpToNamespace),
-    ...skips.map(regexpToNamespace).map(namespace => `-${namespace}`)
+    ...skips.map(regexpToNamespace).map((namespace) => `-${namespace}`),
   ].join(",");
   enable("");
   return namespaces;
@@ -269,7 +269,7 @@ const debugModule: DebugModule = Object.assign(createDebug, {
   names,
   skips,
   formatters,
-  log
+  log,
 });
 
 // Enable namespaces passed from env

@@ -18,7 +18,7 @@ export default function format(...args: any[]) {
   let i = 1;
   const f = args[0];
   const len = args.length;
-  let str = String(f).replace(formatRegExp, function(x) {
+  let str = String(f).replace(formatRegExp, function (x) {
     if (x === "%%") return "%";
     if (i >= len) return x;
     switch (x) {

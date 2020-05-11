@@ -2,11 +2,11 @@
 import {
   assert,
   assertEquals,
-  assertStrictEq
+  assertStrictEq,
 } from "https://deno.land/std@v0.50.0/testing/asserts.ts";
 import format from "./format.ts";
 
-Deno.test('testFormat', function () {
+Deno.test("testFormat", function () {
   assertEquals(format(), "");
   assertEquals(format(""), "");
   assertEquals(format([]), "[]");
@@ -42,7 +42,7 @@ Deno.test('testFormat', function () {
   assertEquals(format("%%%s%%", "hi"), "%hi%");
   assertEquals(format("%%%s%%%%", "hi"), "%hi%%");
 
-  (function() {
+  (function () {
     let o: { o?: any } = {};
     o.o = o;
     assertEquals(format("%j", o), "[Circular]");

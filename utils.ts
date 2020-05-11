@@ -78,7 +78,7 @@ export const colors = [
   214,
   215,
   220,
-  221
+  221,
 ];
 
 /**
@@ -112,8 +112,8 @@ export interface InspectOpts {
 export function getInspectOpts(): InspectOpts {
   const currentEnv = env.toObject();
   const inspectOpts: InspectOpts = Object.keys(currentEnv)
-    .filter(key => /^debug_/i.test(key))
-    .reduce((obj: {[key:string]: number | boolean | null}, key) => {
+    .filter((key) => /^debug_/i.test(key))
+    .reduce((obj: { [key: string]: number | boolean | null }, key) => {
       const prop = camelCase(key.slice(6));
 
       let envVar: string = currentEnv[key];
