@@ -21,7 +21,7 @@ service("booting %s", serviceName);
 Then run your app.
 
 ```sh
-> DEBUG=* deno --allow-env app.ts
+> DEBUG=* deno run --allow-env app.ts
 ```
 
 ## Todo
