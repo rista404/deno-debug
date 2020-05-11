@@ -1,18 +1,15 @@
-// Adapted from https://github.com/visionmedia/debug/blob/master/src/index.js
-
 const { env, stderr } = Deno;
 import format from "./format.ts";
-import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
 import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
 
 interface DebugInstance {
-  (...args: any[]): void;
+  (log: string | Error, ...args: any[]): void
   namespace: string;
   enabled: boolean;
   color: number;
   destroy: () => boolean;
   extend: (namespace: string, delimiter?: string) => DebugInstance;
-  log: Function | void;
+  log?: Function;
 }
 
 interface DebugModule {
@@ -56,31 +53,31 @@ function createDebug(namespace: string): DebugInstance {
 
   let debug: DebugInstance;
 
-  // @ts-ignore
-  debug = function(...args: any[]) {
+  // @ts-ignore-next-line
+  debug = function(log: string | Error, ...args: any[]) {
     // Skip if debugger is disabled
     if (!debug.enabled) {
-      return;
+      return
     }
 
     const self = debug;
 
-    args[0] = coerce(args[0]);
+    log = coerce(log);
 
-    if (typeof args[0] !== "string") {
+    if (typeof log !== "string") {
       // Anything else let's inspect with %O
-      args.unshift("%O");
+      args.unshift(log);
+      log = "%O"
     }
 
     // Set `diff` timestamp
-    const currTime = Number(new Date());
+    const currTime = Number(Date.now());
     // Difference in miliseconds
     const diff = currTime - (prevTime || currTime);
     prevTime = currTime;
 
     // Apply all custom formatters to our arguments
-    const customFormattedArgs = applyFormatters.call(self, ...args);
-
+    const customFormattedArgs = applyFormatters.call(self, log, ...args);
     const { namespace, color } = self;
 
     // Format the string before logging
@@ -95,6 +92,7 @@ function createDebug(namespace: string): DebugInstance {
 
     // Finally, log
     logFn.apply(self, formattedArgs);
+    return
   };
 
   debug.namespace = namespace;
@@ -228,7 +226,7 @@ function formatArgs(
     .map((line: string) => `${prefix}${line}`)
     .join("\n");
 
-  const lastArg = `${colorCode}m+${ms(diff)}${"\u001B[0m"}`;
+  const lastArg = `${colorCode}m+${diff}${"\u001B[0m"}`;
 
   return [...args, lastArg];
 }
@@ -250,9 +248,9 @@ export function disable(): string {
  */
 function updateNamespacesEnv(namespaces: string): void {
   if (namespaces) {
-    env().DEBUG = namespaces;
+    env.toObject().DEBUG = namespaces;
   } else {
-    delete env().DEBUG;
+    delete env.toObject().DEBUG;
   }
 }
 
@@ -275,6 +273,6 @@ const debugModule: DebugModule = Object.assign(createDebug, {
 });
 
 // Enable namespaces passed from env
-enable(env().DEBUG);
+enable(env.toObject().DEBUG);
 
 export default debugModule;

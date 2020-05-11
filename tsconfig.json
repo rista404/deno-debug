@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "noImplicitThis": false,
+    "plugins": [
+      {
+        "name": "typescript-deno-plugin"
+      }
+    ]
+  }
+}
