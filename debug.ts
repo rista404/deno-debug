@@ -221,7 +221,6 @@ function formatArgs(
   const colorCode = "\u001B[3" + (color < 8 ? color : "8;5;" + color);
   const prefix = `  ${colorCode};1m${namespace} \u001B[0m`;
   // Add a prefix on every line
-  console.log('formart args[0]', args[0])
   args[0] = args[0]
     .split("\n")
     .map((line: string) => `${prefix}${line}`)
