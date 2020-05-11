@@ -106,7 +106,7 @@ function createDebug(namespace: string): DebugInstance {
   return debug;
 }
 
-function destroy() {
+function destroy(this: DebugInstance) {
   if (instances.includes(this)) {
     this.enabled = false;
     instances = instances.filter((instance) => instance !== this);
@@ -120,7 +120,11 @@ function destroy() {
  * const serverHttp = server.extend('http') // server:http
  * const serverHttpReq = serverHttp.extend('req', '-') // server:http-req
  */
-function extend(subNamespace: string, delimiter: string = ":") {
+function extend(
+  this: DebugInstance,
+  subNamespace: string,
+  delimiter: string = ":",
+) {
   const newNamespace = `${this.namespace}${delimiter}${subNamespace}`;
   const newDebug = createDebug(newNamespace);
   // Pass down the custom logger
@@ -128,7 +132,7 @@ function extend(subNamespace: string, delimiter: string = ":") {
   return newDebug;
 }
 
-function applyFormatters(fmt: string, ...args: any[]) {
+function applyFormatters(this: DebugInstance, fmt: string, ...args: any[]) {
   let index = 0;
   const newFmt = fmt.replace(/%([a-zA-Z%])/g, (match, format) => {
     // If we encounter an escaped % then don't increase the array index
@@ -184,9 +188,7 @@ export function enable(namespaces: any) {
 
   // Resets enabled and disable namespaces
   names = [];
-  skips = [];
-
-  // Splits on comma
+  skips = []; // Splits on comma
   // Loops through the passed namespaces
   // And groups them in enabled and disabled lists
   (typeof namespaces === "string" ? namespaces : "")
