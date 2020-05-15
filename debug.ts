@@ -1,18 +1,15 @@
-// Adapted from https://github.com/visionmedia/debug/blob/master/src/index.js
-
-const { env, stderr } = Deno;
+const { noColor, env, stderr } = Deno;
 import format from "./format.ts";
-import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
 import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
 
 interface DebugInstance {
-  (...args: any[]): void;
+  (log: string | Error, ...args: any[]): void;
   namespace: string;
   enabled: boolean;
   color: number;
   destroy: () => boolean;
   extend: (namespace: string, delimiter?: string) => DebugInstance;
-  log: Function | void;
+  log?: Function;
 }
 
 interface DebugModule {
@@ -56,8 +53,8 @@ function createDebug(namespace: string): DebugInstance {
 
   let debug: DebugInstance;
 
-  // @ts-ignore
-  debug = function(...args: any[]) {
+  // @ts-ignore-next-line
+  debug = function (log: string | Error, ...args: any[]) {
     // Skip if debugger is disabled
     if (!debug.enabled) {
       return;
@@ -65,28 +62,28 @@ function createDebug(namespace: string): DebugInstance {
 
     const self = debug;
 
-    args[0] = coerce(args[0]);
+    log = coerce(log);
 
-    if (typeof args[0] !== "string") {
+    if (typeof log !== "string") {
       // Anything else let's inspect with %O
-      args.unshift("%O");
+      args.unshift(log);
+      log = "%O";
     }
 
     // Set `diff` timestamp
-    const currTime = Number(new Date());
+    const currTime = Number(Date.now());
     // Difference in miliseconds
     const diff = currTime - (prevTime || currTime);
     prevTime = currTime;
 
     // Apply all custom formatters to our arguments
-    const customFormattedArgs = applyFormatters.call(self, ...args);
-
+    const customFormattedArgs = applyFormatters.call(self, log, ...args);
     const { namespace, color } = self;
 
     // Format the string before logging
     const formattedArgs = formatArgs(
       { namespace, color, diff },
-      customFormattedArgs
+      customFormattedArgs,
     );
 
     // Use a custom logger if defined
@@ -95,6 +92,7 @@ function createDebug(namespace: string): DebugInstance {
 
     // Finally, log
     logFn.apply(self, formattedArgs);
+    return;
   };
 
   debug.namespace = namespace;
@@ -108,10 +106,10 @@ function createDebug(namespace: string): DebugInstance {
   return debug;
 }
 
-function destroy() {
+function destroy(this: DebugInstance) {
   if (instances.includes(this)) {
     this.enabled = false;
-    instances = instances.filter(instance => instance !== this);
+    instances = instances.filter((instance) => instance !== this);
     return true;
   }
   return false;
@@ -122,7 +120,11 @@ function destroy() {
  * const serverHttp = server.extend('http') // server:http
  * const serverHttpReq = serverHttp.extend('req', '-') // server:http-req
  */
-function extend(subNamespace: string, delimiter: string = ":") {
+function extend(
+  this: DebugInstance,
+  subNamespace: string,
+  delimiter: string = ":",
+) {
   const newNamespace = `${this.namespace}${delimiter}${subNamespace}`;
   const newDebug = createDebug(newNamespace);
   // Pass down the custom logger
@@ -130,7 +132,7 @@ function extend(subNamespace: string, delimiter: string = ":") {
   return newDebug;
 }
 
-function applyFormatters(fmt: string, ...args: any[]) {
+function applyFormatters(this: DebugInstance, fmt: string, ...args: any[]) {
   let index = 0;
   const newFmt = fmt.replace(/%([a-zA-Z%])/g, (match, format) => {
     // If we encounter an escaped % then don't increase the array index
@@ -186,17 +188,15 @@ export function enable(namespaces: any) {
 
   // Resets enabled and disable namespaces
   names = [];
-  skips = [];
-
-  // Splits on comma
-  // Loops through the passed namespaces
+  skips = [] // Splits on comma
+  ; // Loops through the passed namespaces
   // And groups them in enabled and disabled lists
   (typeof namespaces === "string" ? namespaces : "")
     .split(/[\s,]+/)
     // Ignore empty strings
     .filter(Boolean)
-    .map(namespace => namespace.replace(/\*/g, ".*?"))
-    .forEach(ns => {
+    .map((namespace) => namespace.replace(/\*/g, ".*?"))
+    .forEach((ns) => {
       // If a namespace starts with `-`, we should disable that namespace
       if (ns[0] === "-") {
         skips.push(new RegExp("^" + ns.slice(1) + "$"));
@@ -205,7 +205,7 @@ export function enable(namespaces: any) {
       }
     });
 
-  instances.forEach(instance => {
+  instances.forEach((instance) => {
     instance.enabled = enabled(instance.namespace);
   });
 }
@@ -218,17 +218,19 @@ interface FormatArgsOptions {
 
 function formatArgs(
   { namespace, color, diff }: FormatArgsOptions,
-  args: any[]
+  args: any[],
 ): any[] {
   const colorCode = "\u001B[3" + (color < 8 ? color : "8;5;" + color);
-  const prefix = `  ${colorCode};1m${namespace} \u001B[0m`;
+  const prefix = noColor
+    ? `  ${namespace} `
+    : `  ${colorCode};1m${namespace} \u001B[0m`;
   // Add a prefix on every line
   args[0] = args[0]
     .split("\n")
     .map((line: string) => `${prefix}${line}`)
     .join("\n");
 
-  const lastArg = `${colorCode}m+${ms(diff)}${"\u001B[0m"}`;
+  const lastArg = noColor ? `+${diff}` : `${colorCode}m+${diff}${"\u001B[0m"}`;
 
   return [...args, lastArg];
 }
@@ -239,7 +241,7 @@ function formatArgs(
 export function disable(): string {
   const namespaces = [
     ...names.map(regexpToNamespace),
-    ...skips.map(regexpToNamespace).map(namespace => `-${namespace}`)
+    ...skips.map(regexpToNamespace).map((namespace) => `-${namespace}`),
   ].join(",");
   enable("");
   return namespaces;
@@ -250,9 +252,9 @@ export function disable(): string {
  */
 function updateNamespacesEnv(namespaces: string): void {
   if (namespaces) {
-    env().DEBUG = namespaces;
+    env.toObject().DEBUG = namespaces;
   } else {
-    delete env().DEBUG;
+    delete env.toObject().DEBUG;
   }
 }
 
@@ -271,10 +273,10 @@ const debugModule: DebugModule = Object.assign(createDebug, {
   names,
   skips,
   formatters,
-  log
+  log,
 });
 
 // Enable namespaces passed from env
-enable(env().DEBUG);
+enable(env.toObject().DEBUG);
 
 export default debugModule;

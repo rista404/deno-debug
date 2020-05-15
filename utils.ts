@@ -78,7 +78,7 @@ export const colors = [
   214,
   215,
   220,
-  221
+  221,
 ];
 
 /**
@@ -105,15 +105,15 @@ export function selectColor(namespace: string): number {
 export interface InspectOpts {
   hideDate?: boolean | null;
   colors?: boolean | null;
-  depth?: number | null;
+  depth?: number;
   showHidden?: boolean | null;
 }
 
 export function getInspectOpts(): InspectOpts {
-  const currentEnv = env();
+  const currentEnv = env.toObject();
   const inspectOpts: InspectOpts = Object.keys(currentEnv)
-    .filter(key => /^debug_/i.test(key))
-    .reduce((obj, key) => {
+    .filter((key) => /^debug_/i.test(key))
+    .reduce((obj: { [key: string]: number | boolean | null }, key) => {
       const prop = camelCase(key.slice(6));
 
       let envVar: string = currentEnv[key];

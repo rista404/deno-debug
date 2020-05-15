@@ -21,7 +21,7 @@ service("booting %s", serviceName);
 Then run your app.
 
 ```sh
-> DEBUG=* deno --allow-env app.ts
+> DEBUG=* deno run --allow-env app.ts
 ```
 
 ## Todo
@@ -31,7 +31,7 @@ Then run your app.
 - [x] custom formatters
 - [x] `log` override in all namespaces
 - [x] inspect opts
-- [ ] detecting color support
+- [x] detecting color support
 - [ ] non-tty env
 - [x] add `debug` to registry
 

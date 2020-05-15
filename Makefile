@@ -1,10 +1,10 @@
 all: fmt test
 
 demo:
-	DEBUG=* deno --allow-env ./demo.ts
+	DEBUG=* deno run --allow-env ./demo.ts
 
 test:
-	DEBUG=* deno -r --allow-env ./test.ts
+	DEBUG=* deno test --allow-env
 
 fmt:
-	prettier --no-color --write *.md *.ts *.yml
+	deno fmt

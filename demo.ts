@@ -1,7 +1,7 @@
 import debug from "./debug.ts";
 
 function sleep(ms: number) {
-  return new Promise(r => {
+  return new Promise((r) => {
     setTimeout(() => r(), ms);
   });
 }
@@ -55,13 +55,13 @@ async function demo() {
   http("received event: %O", {
     bar: true,
     justify: "column",
-    align: { center: true }
+    align: { center: true },
   });
   await sleep(100);
   http("received event: %O", {
     bar: true,
     justify: "column",
-    align: { center: true }
+    align: { center: true },
   });
 
   // TODO
