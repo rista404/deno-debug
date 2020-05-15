@@ -1,4 +1,4 @@
-const { noColor, env, stderr } = Deno;
+const { noColor, env } = Deno;
 import format from "./format.ts";
 import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
 
@@ -261,7 +261,7 @@ function updateNamespacesEnv(namespaces: string): void {
 // Default logger
 function log(...args: any[]): void {
   const result = format(...args);
-  stderr.write(new TextEncoder().encode(result + "\n"));
+  console.log(result);
 }
 
 // Exports
