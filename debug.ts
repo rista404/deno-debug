@@ -1,4 +1,5 @@
 const { noColor, env } = Deno;
+import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
 import format from "./format.ts";
 import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
 
@@ -188,8 +189,9 @@ export function enable(namespaces: any) {
 
   // Resets enabled and disable namespaces
   names = [];
-  skips = [] // Splits on comma
-  ; // Loops through the passed namespaces
+  skips = [];
+  // Splits on comma
+  // Loops through the passed namespaces
   // And groups them in enabled and disabled lists
   (typeof namespaces === "string" ? namespaces : "")
     .split(/[\s,]+/)
@@ -230,7 +232,9 @@ function formatArgs(
     .map((line: string) => `${prefix}${line}`)
     .join("\n");
 
-  const lastArg = noColor ? `+${diff}` : `${colorCode}m+${diff}${"\u001B[0m"}`;
+  const lastArg = noColor
+    ? `+${ms(diff)}`
+    : `${colorCode}m+${ms(diff)}${"\u001B[0m"}`;
 
   return [...args, lastArg];
 }
