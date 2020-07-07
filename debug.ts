@@ -1,7 +1,11 @@
-const { noColor, env } = Deno;
+const { noColor } = Deno;
 import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
 import format from "./format.ts";
 import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
+
+const DEBUG = {
+  debug: ''
+}
 
 interface DebugInstance {
   (log: string | Error, ...args: any[]): void;
@@ -256,9 +260,9 @@ export function disable(): string {
  */
 function updateNamespacesEnv(namespaces: string): void {
   if (namespaces) {
-    env.toObject().DEBUG = namespaces;
+    DEBUG.debug = namespaces;
   } else {
-    delete env.toObject().DEBUG;
+    DEBUG.debug = "";
   }
 }
 
@@ -281,6 +285,13 @@ const debugModule: DebugModule = Object.assign(createDebug, {
 });
 
 // Enable namespaces passed from env
-enable(env.toObject().DEBUG);
+try {
+  const setting = Deno.env.get("DEBUG");
+  if (setting) {
+    DEBUG.debug = setting;
+  }
+} catch (err) {}
+
+enable(DEBUG.debug);
 
 export default debugModule;
