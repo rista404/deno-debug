@@ -2,8 +2,8 @@
 import {
   assert,
   assertEquals,
-  assertStrictEq,
-} from "https://deno.land/std@v0.50.0/testing/asserts.ts";
+  assertStrictEquals,
+} from "https://deno.land/std/testing/asserts.ts";
 import debug from "./debug.ts";
 
 Deno.test("passes a basic sanity check", function () {
@@ -83,7 +83,7 @@ Deno.test("extend should extend namespace with empty delimiter", function () {
   log.log = () => {};
 
   const logBar = log.extend("bar", "");
-  assertStrictEq(logBar.namespace, "foobar");
+  assertStrictEquals(logBar.namespace, "foobar");
 });
 
 Deno.test(
@@ -93,7 +93,7 @@ Deno.test(
     log.log = () => {};
 
     const logBar = log.extend("bar");
-    assertStrictEq(log.log, logBar.log);
+    assertStrictEquals(log.log, logBar.log);
   },
 );
 
@@ -226,7 +226,7 @@ Deno.test("formatters can access logger on this", function () {
   log.log = () => {};
 
   debug.formatters.t = function (v: any) {
-    assertStrictEq(this, log);
+    assertStrictEquals(this as any, log as any);
     return `test`;
   };
   log("this is: %t", "this will be ignored");

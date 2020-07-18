@@ -1,5 +1,5 @@
 const { noColor } = Deno;
-import { ms } from "https://raw.githubusercontent.com/denolib/ms/master/ms.ts";
+import { ms } from "https://deno.land/x/ms/ms.ts";
 import format from "./format.ts";
 import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
 
