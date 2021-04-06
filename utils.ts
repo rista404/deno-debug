@@ -95,23 +95,9 @@ export function selectColor(namespace: string): number {
   return colors[Math.abs(hash) % colors.length];
 }
 
-/**
- * Build up the default `inspectOpts` object from the environment variables.
- * Used in `deno.inspect` in node.
- * Checkout deno source code for `inspect`: https://github.com/denoland/deno/blob/master/js/console.ts
- *
- * $ DEBUG_COLORS=no DEBUG_DEPTH=10 DEBUG_SHOW_HIDDEN=enabled node script.js
- */
-export interface InspectOpts {
-  hideDate?: boolean | null;
-  colors?: boolean | null;
-  depth?: number;
-  showHidden?: boolean | null;
-}
-
-export function getInspectOpts(): InspectOpts {
+export function getInspectOpts(): Deno.InspectOptions {
   const currentEnv = env.toObject();
-  const inspectOpts: InspectOpts = Object.keys(currentEnv)
+  const inspectOpts: Deno.InspectOptions = Object.keys(currentEnv)
     .filter((key) => /^debug_/i.test(key))
     .reduce((obj: { [key: string]: number | boolean | null }, key) => {
       const prop = camelCase(key.slice(6));

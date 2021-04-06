@@ -1,7 +1,7 @@
 import debug from "./debug.ts";
 
 function sleep(ms: number) {
-  return new Promise((r) => {
+  return new Promise<void>((r) => {
     setTimeout(() => r(), ms);
   });
 }
