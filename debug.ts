@@ -1,11 +1,11 @@
 const { noColor } = Deno;
 import { ms } from "https://deno.land/x/ms/ms.ts";
 import format from "./format.ts";
-import { coerce, selectColor, regexpToNamespace } from "./utils.ts";
+import { coerce, regexpToNamespace, selectColor } from "./utils.ts";
 
 const DEBUG = {
-  debug: ''
-}
+  debug: "",
+};
 
 interface DebugInstance {
   (log: string | Error, ...args: any[]): void;

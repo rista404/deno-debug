@@ -38,6 +38,8 @@ Then run your app.
 ## Notes
 
 - Currently debug assumes it is TTY and shows colors by default.
-- Deno's `inspect` differs from node's `util.inspect` so the output may not be the same.
-- We're using a custom `format` function ported from `util`. Might be cool to extract it when `util` is ported entirely.
+- Deno's `inspect` differs from node's `util.inspect` so the output may not be
+  the same.
+- We're using a custom `format` function ported from `util`. Might be cool to
+  extract it when `util` is ported entirely.
 - We should cover more functionality with tests.

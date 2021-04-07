@@ -1,7 +1,5 @@
 // Copied from https://github.com/defunctzombie/node-util/blob/master/test/node/format.js
-import {
-  assertEquals,
-} from "https://deno.land/std/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
 import format from "./format.ts";
 
 Deno.test("testFormat", function () {
